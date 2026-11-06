@@ -1,0 +1,23 @@
+/** Daftar departemen, sama dengan form pendaftaran turnamen (project-non-aio). */
+export const DEPARTMENTS = [
+  "Prod - AL4",
+  "Prod - GBL",
+  "Prod - CAN-PET",
+  "Prod - Enmix",
+  "Prod - OC3",
+  "Prod - Sachet",
+  "Prod - Shrink",
+  "Engineering",
+  "QA",
+  "Office",
+  "Technical",
+  "SCM - Logistic WH",
+  "SCM - Logistic RMPM",
+  "Security",
+  "EHS",
+  "OCS",
+  "Rosendha",
+  "Proven Force Indonesia",
+  "Misuli",
+  "Intern",
+] as const;

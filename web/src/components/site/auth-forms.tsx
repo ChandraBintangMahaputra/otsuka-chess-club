@@ -8,7 +8,8 @@ import {
   registerAction,
   type FormState,
 } from "@/actions/auth";
-import { Button, Field, Input } from "@/components/ui";
+import { Button, Field, Input, Select } from "@/components/ui";
+import { DEPARTMENTS } from "@/lib/departments";
 import { useSubmit } from "@/lib/use-submit";
 
 function FormError({ state }: { state: FormState }) {
@@ -49,7 +50,7 @@ export function LoginForm({ next }: { next?: string }) {
     <form onSubmit={onSubmit} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
       <FormError state={state} />
-      <TextField name="identifier" placeholder="Mis. budi.santoso atau budi@kantor.co.id" label="Username atau email" state={state} autoComplete="username" />
+      <TextField name="identifier" placeholder="Mis. budi.santoso atau nama@email.com" label="Username atau email" state={state} autoComplete="username" />
       <TextField name="password" placeholder="Masukkan password" label="Password" type="password" state={state} autoComplete="current-password" />
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Memeriksa…" : "Masuk"}
@@ -79,8 +80,26 @@ export function RegisterForm() {
         autoComplete="username"
         help="3–20 karakter: huruf kecil, angka, titik, garis bawah."
       />
-      <TextField name="email" placeholder="nama@kantor.co.id" label="Email kantor" type="email" state={state} autoComplete="email" />
-      <TextField name="division" placeholder="Mis. Teknologi Informasi" label="Divisi" state={state} autoComplete="organization-title" />
+      <TextField name="email" placeholder="nama@email.com" label="Email" type="email" state={state} autoComplete="email" />
+      <Field label="Departemen" name="division" error={state?.fields?.division}>
+        <Select
+          id="division"
+          name="division"
+          required
+          defaultValue=""
+          aria-invalid={!!state?.fields?.division}
+          aria-describedby={state?.fields?.division ? "division-error" : undefined}
+        >
+          <option value="" disabled>
+            Pilih departemen
+          </option>
+          {DEPARTMENTS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </Select>
+      </Field>
       <TextField
         name="password"
         placeholder="Minimal 8 karakter, huruf dan angka"

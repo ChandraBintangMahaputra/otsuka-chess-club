@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEPARTMENTS } from "./departments";
 
 const password = z
   .string()
@@ -15,7 +16,7 @@ export const registerSchema = z
       .trim()
       .regex(/^[a-z0-9._]{3,20}$/, "Username 3–20 karakter: huruf kecil, angka, titik, garis bawah"),
     email: z.string().trim().toLowerCase().email("Format email tidak valid").max(200),
-    division: z.string().trim().min(1, "Divisi wajib diisi").max(100),
+    division: z.enum(DEPARTMENTS, { error: "Pilih departemen dari daftar" }),
     password,
     confirmPassword: z.string(),
   })

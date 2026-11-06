@@ -18,7 +18,7 @@ export const defaultSettings: SiteSettings = {
     eyebrow: "Siapa kami",
     title: "Tentang klub",
     body: "Otsuka Chess adalah klub catur hobi internal perusahaan. Kami berkumpul untuk belajar, berlatih, dan bertanding santai, terbuka untuk semua karyawan dari yang belum tahu cara gerak Kuda sampai yang rutin ikut turnamen.",
-    vision: "Menjadikan catur sebagai ruang belajar dan kebersamaan lintas divisi.",
+    vision: "Menjadikan catur sebagai ruang belajar dan kebersamaan lintas departemen.",
     memberCount: null,
   },
   sections: {

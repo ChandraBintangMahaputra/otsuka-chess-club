@@ -91,13 +91,24 @@ describe("validasi", () => {
   const base = {
     fullName: "Budi Santoso",
     username: "budi.s",
-    email: "Budi@Kantor.co.id",
-    division: "IT",
+    email: "Budi@Gmail.com",
+    division: "Prod - AL4",
     password: "rahasia123",
     confirmPassword: "rahasia123",
   };
   it("menerima data benar dan menormalkan email", () => {
-    expect(registerSchema.parse(base).email).toBe("budi@kantor.co.id");
+    expect(registerSchema.parse(base).email).toBe("budi@gmail.com");
+  });
+  it("email boleh dari domain apa pun", () => {
+    expect(registerSchema.safeParse({ ...base, email: "budi@yahoo.co.id" }).success).toBe(true);
+    expect(registerSchema.safeParse({ ...base, email: "bukan-email" }).success).toBe(false);
+  });
+  it("departemen harus dari daftar", () => {
+    expect(registerSchema.safeParse({ ...base, division: "Intern" }).success).toBe(true);
+    const r = registerSchema.safeParse({ ...base, division: "" });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].message).toBe("Pilih departemen dari daftar");
+    expect(registerSchema.safeParse({ ...base, division: "Karangan" }).success).toBe(false);
   });
   it("menolak username dan password lemah", () => {
     expect(registerSchema.safeParse({ ...base, username: "A!" }).success).toBe(false);
