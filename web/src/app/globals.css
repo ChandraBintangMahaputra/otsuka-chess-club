@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f7f3ea;
+  --surface: #fffdf8;
+  --ink: #17211d;
+  --muted: #55625c;
+  --line: #ddd5c4;
+  --forest: #1f4d3f;
+  --forest-deep: #143329;
+  --on-forest: #fbf7ee;
+  --copper: #a84c1a;
+  --success: #17693f;
+  --success-soft: #e0f0e5;
+  --danger: #b42318;
+  --danger-soft: #fbe6e3;
+  --sq-light: #efe6d3;
+  --sq-dark: #6f8f7b;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-on-forest: var(--on-forest);
+  --color-copper: var(--copper);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+button,
+summary,
+select,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Teks Markdown materi dan catatan opening */
+.prose-chess {
+  max-width: 68ch;
+}
+.prose-chess > * + * {
+  margin-top: 1em;
+}
+.prose-chess h3 {
+  margin-top: 1.5em;
+  font-size: 1.2rem;
+}
+.prose-chess ul,
+.prose-chess ol {
+  padding-left: 1.4em;
+}
+.prose-chess ul {
+  list-style: disc;
+}
+.prose-chess ol {
+  list-style: decimal;
+}
+.prose-chess li + li {
+  margin-top: 0.3em;
+}
+.prose-chess img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+.prose-chess h2 {
+  margin-top: 1.5em;
+  font-size: 1.5rem;
+}
+.prose-chess strong {
+  font-weight: 700;
+}
+.prose-chess table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 320px;
+}
+.prose-chess th,
+.prose-chess td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "otsuka-artikel": {
+      "command": "node",
+      "args": ["web/node_modules/tsx/dist/cli.mjs", "web/scripts/mcp-articles.mts"]
+    }
+  }
+}

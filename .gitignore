@@ -1,0 +1,7 @@
+credential-supabase.md
+*.csv
+lichess_db_puzzle.csv/
+__pycache__/
+.env*
+!.env.example
+.playwright-mcp/
