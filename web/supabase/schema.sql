@@ -166,6 +166,52 @@ create table if not exists public.media (
 alter table public.posts enable row level security;
 alter table public.media enable row level security;
 
+-- Main online: tantangan, permainan, dan rating bermain (terpisah dari rating puzzle).
+alter table public.users add column if not exists play_rating int not null default 1200;
+
+create table if not exists public.challenges (
+  id                 uuid primary key default gen_random_uuid(),
+  from_id            uuid not null references public.users (id) on delete cascade,
+  to_id              uuid not null references public.users (id) on delete cascade,
+  initial_ms         int not null,
+  increment_ms       int not null,
+  status             text not null default 'pending'
+                     check (status in ('pending', 'accepted', 'declined', 'cancelled')),
+  game_id            uuid,
+  created_at         timestamptz not null default now(),
+  responded_at       timestamptz
+);
+create index if not exists challenges_to_idx on public.challenges (to_id, status);
+create index if not exists challenges_from_idx on public.challenges (from_id, status);
+
+create table if not exists public.games (
+  id                   uuid primary key default gen_random_uuid(),
+  white_id             uuid not null references public.users (id) on delete cascade,
+  black_id             uuid not null references public.users (id) on delete cascade,
+  initial_ms           int not null,
+  increment_ms         int not null,
+  moves                text not null default '',   -- UCI dipisah spasi
+  white_ms             int not null,
+  black_ms             int not null,
+  turn_started_at      timestamptz,                 -- null sampai Hitam melangkah pertama
+  status               text not null default 'active' check (status in ('active', 'finished', 'aborted')),
+  result               text check (result in ('1-0', '0-1', '1/2-1/2')),
+  termination          text,
+  draw_offer           text check (draw_offer in ('w', 'b')),
+  white_rating_before  int,
+  black_rating_before  int,
+  white_rating_after   int,
+  black_rating_after   int,
+  last_activity_at     timestamptz not null default now(),
+  created_at           timestamptz not null default now(),
+  ended_at             timestamptz
+);
+create index if not exists games_white_idx on public.games (white_id, status);
+create index if not exists games_black_idx on public.games (black_id, status);
+
+alter table public.challenges enable row level security;
+alter table public.games enable row level security;
+
 -- FSD 6.2: RLS aktif tanpa policy. Akses anon/authenticated lewat REST selalu ditolak.
 alter table public.users            enable row level security;
 alter table public.sessions         enable row level security;

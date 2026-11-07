@@ -45,8 +45,33 @@ Jaringan kantor memblokir port 6543 (transaction pooler). Untuk lokal, isi `DATA
    | `CRON_SECRET` | String acak panjang |
    | `SITE_URL` | URL website, mis. `https://otsuka-chess.vercel.app` |
    | `PUBLIC_SITE` | Isi `true` hanya bila website boleh diindeks mesin pencari |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL Supabase, untuk Main online |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon atau publishable key Supabase, untuk Main online |
 
 3. Cron harian sudah diatur di `vercel.json`. Cron mengisi puzzle harian dan menjaga project Supabase tetap aktif.
+4. Fungsi server dijalankan di region Mumbai (`bom1`, di `vercel.json`), dekat database Supabase di India, agar setiap langkah catur online cepat.
+
+Variable `NEXT_PUBLIC_` dibaca saat build, jadi setelah mengisinya lakukan **Redeploy**.
+
+## Main online
+
+Anggota bisa melihat siapa yang sedang membuka halaman Main, saling menantang, dan bermain dengan jam (3+2, 5+3, 10+0, 15+10). Hasilnya mengubah rating Elo bermain (mulai 1200, K=32) yang tampil di `/peringkat`.
+
+**Cara kerja.** Server adalah sumber kebenaran: setiap langkah divalidasi `chess.js` di server, baris permainan dikunci saat diubah, dan jam dihitung dari waktu server. Supabase Realtime hanya dipakai untuk daftar pemain online (Presence) dan sinyal "ada perubahan" (Broadcast). Pesan palsu tidak bisa mengubah permainan karena browser selalu mengambil data dari server. Bila WebSocket tidak tersambung, lobi dan papan otomatis memeriksa server setiap 3 sampai 5 detik.
+
+**Batas paket gratis Supabase Realtime** (dicek 8 November 2026): 200 koneksi bersamaan, 2 juta pesan per bulan, 100 pesan per detik, 20 pesan Presence per detik. Penerapan yang menjaga batas itu:
+
+| Aturan | Efek |
+| --- | --- |
+| WebSocket hanya dibuka di halaman Main, satu koneksi per tab | Pengunjung halaman lain tidak memakai koneksi |
+| Koneksi dilepas bila tab disembunyikan lebih dari 2 menit | Tab yang terlupa tidak menahan kuota 200 koneksi |
+| Jam catur dihitung di browser | Tidak ada pesan per detik |
+| Satu langkah = 1 sinyal ke lawan (2 pesan) | Satu permainan 80 langkah sekitar 160 pesan |
+| Status online dikirim sekali saat masuk lobi atau papan | Di bawah batas 5 pembaruan per 30 detik per browser |
+
+Perkiraan kasar: 50 pemain aktif dengan 20 permainan per hari memakai kurang dari 1 juta pesan per bulan. Pantau di Supabase Dashboard > Usage > Realtime.
+
+**Pengaturan Supabase.** Fitur ini memakai channel publik. Pastikan Realtime > Settings > *Allow public access* aktif. Key `NEXT_PUBLIC_SUPABASE_ANON_KEY` memang terlihat di browser. Data tetap aman karena semua tabel dikunci RLS tanpa policy, sehingga key itu tidak bisa membaca tabel apa pun.
 
 ## MCP artikel
 

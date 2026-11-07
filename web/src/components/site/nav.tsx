@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
   CalendarDays,
+  ChevronDown,
+  Crown,
   Ellipsis,
+  Trophy,
   FileText,
   House,
   Images,
@@ -20,39 +23,93 @@ import { logoutAction } from "@/actions/auth";
 import { buttonClass, cn } from "@/components/ui";
 import { useMe } from "./me-provider";
 
-const LINKS = [
-  { href: "/", label: "Beranda", icon: House },
-  { href: "/belajar", label: "Belajar", icon: BookOpen },
-  { href: "/opening", label: "Opening", icon: Swords },
-  { href: "/puzzle", label: "Puzzle", icon: Puzzle },
-  { href: "/kegiatan", label: "Kegiatan", icon: CalendarDays },
-  { href: "/artikel", label: "Artikel", icon: FileText },
-  { href: "/dokumentasi", label: "Dokumentasi", icon: Images },
-];
+const L = {
+  beranda: { href: "/", label: "Beranda", icon: House },
+  belajar: { href: "/belajar", label: "Belajar", icon: BookOpen },
+  opening: { href: "/opening", label: "Opening", icon: Swords },
+  puzzle: { href: "/puzzle", label: "Puzzle", icon: Puzzle },
+  main: { href: "/main", label: "Main", icon: Crown },
+  peringkat: { href: "/peringkat", label: "Peringkat", icon: Trophy },
+  kegiatan: { href: "/kegiatan", label: "Kegiatan", icon: CalendarDays },
+  artikel: { href: "/artikel", label: "Artikel", icon: FileText },
+  dokumentasi: { href: "/dokumentasi", label: "Dokumentasi", icon: Images },
+};
 
-const PRIMARY = LINKS.slice(0, 4);
-const MORE = LINKS.slice(4);
+// HP: 4 tombol utama + Lainnya. Desktop: Beranda lewat logo.
+const PRIMARY = [L.beranda, L.belajar, L.puzzle, L.main];
+const MORE = [L.opening, L.peringkat, L.kegiatan, L.artikel, L.dokumentasi];
+const DESKTOP = [L.belajar, L.opening, L.puzzle, L.main, L.peringkat];
+const DESKTOP_MORE = [L.kegiatan, L.artikel, L.dokumentasi];
 
 const isActive = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
+const desktopItem = (active: boolean) =>
+  cn(
+    "rounded-lg px-3 py-2 text-[15px] font-medium transition-colors duration-150",
+    active ? "bg-forest/10 text-forest" : "text-ink hover:bg-line/50",
+  );
+
 export function DesktopNav() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const menu = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !menu.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
   return (
     <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
-      {LINKS.map(({ href, label }) => (
+      {DESKTOP.map(({ href, label }) => (
         <Link
           key={href}
           href={href}
           aria-current={isActive(pathname, href) ? "page" : undefined}
-          className={cn(
-            "rounded-lg px-3 py-2 text-[15px] font-medium transition-colors duration-150",
-            isActive(pathname, href) ? "bg-forest/10 text-forest" : "text-ink hover:bg-line/50",
-          )}
+          className={desktopItem(isActive(pathname, href))}
         >
           {label}
         </Link>
       ))}
+      <div ref={menu} className="relative">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="menu-lainnya-desktop"
+          onClick={() => setOpen((o) => !o)}
+          className={cn(desktopItem(DESKTOP_MORE.some((l) => isActive(pathname, l.href))), "flex items-center gap-1")}
+        >
+          Lainnya <ChevronDown size={16} aria-hidden />
+        </button>
+        {open && (
+          <ul
+            id="menu-lainnya-desktop"
+            className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-line bg-surface p-1 shadow-lg"
+          >
+            {DESKTOP_MORE.map(({ href, label, icon: Icon }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  aria-current={isActive(pathname, href) ? "page" : undefined}
+                  className={cn(desktopItem(isActive(pathname, href)), "flex items-center gap-2")}
+                >
+                  <Icon size={18} aria-hidden /> {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </nav>
   );
 }

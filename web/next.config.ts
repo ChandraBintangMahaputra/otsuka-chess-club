@@ -2,13 +2,18 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
+// Main online memakai Supabase Realtime (WebSocket) langsung dari browser.
+const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? ` ${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin} ${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin.replace(/^http/, "ws")}`
+  : "";
+
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  `connect-src 'self'${isDev ? " ws:" : ""}`,
+  `connect-src 'self'${supabase}${isDev ? " ws:" : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
