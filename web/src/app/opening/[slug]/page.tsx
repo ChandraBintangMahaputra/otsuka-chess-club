@@ -81,7 +81,7 @@ export default async function OpeningDetailPage({ params }: PageProps<"/opening/
             {relatedTotal > related.length && (
               <Link
                 href={`/opening?q=${encodeURIComponent(opening.family)}`}
-                className="mt-3 inline-block text-sm font-semibold text-forest underline"
+                className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-forest underline"
               >
                 Lihat semua {relatedTotal.toLocaleString("id-ID")} variasi
               </Link>

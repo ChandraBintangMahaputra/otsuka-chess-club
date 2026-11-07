@@ -21,12 +21,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await requireAdmin();
   return (
     <Container className="pb-12 pt-6">
-      <nav aria-label="Menu admin" className="flex gap-1 overflow-x-auto border-b border-line pb-3">
+      {/* Membungkus ke baris berikutnya di HP, agar semua menu admin terlihat tanpa geser. */}
+      <nav aria-label="Menu admin" className="flex flex-wrap gap-1 border-b border-line pb-3">
         {LINKS.map(([href, label]) => (
           <Link
             key={href}
             href={href}
-            className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold hover:bg-line/50"
+            className="flex min-h-11 items-center whitespace-nowrap rounded-lg px-3 text-sm font-semibold hover:bg-line/50"
           >
             {label}
           </Link>

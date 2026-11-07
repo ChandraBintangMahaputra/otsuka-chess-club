@@ -125,6 +125,11 @@ export function OnlineGame({ initial }: { initial: GameView }) {
   }, [me, view.white, view.black, view.id]);
   useChannel(lobbyPresence ? topics.lobby : null, { enabled: tabActive && isActive, presence: lobbyPresence });
 
+  // Halaman dibuka dari lobi yang mungkin sudah di-scroll. Di HP papan harus langsung terlihat penuh.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
+
   // Cadangan tanpa realtime: periksa tiap 3 detik. Dengan realtime, cukup sesekali untuk berjaga.
   usePolling(refresh, status === "live" ? 20_000 : 3_000, tabActive && isActive);
 

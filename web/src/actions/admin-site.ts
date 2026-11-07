@@ -1,14 +1,18 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import type { AdminState } from "@/actions/admin";
 import { requireAdmin } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { landingItemSchema, settingsSchema } from "@/lib/site-content";
+import { SITE_SETTINGS_TAG } from "@/lib/site-queries";
 
-/** Footer ada di layout, jadi semua halaman ikut diperbarui. */
-const refreshSite = () => revalidatePath("/", "layout");
+/** Footer ada di layout, jadi semua halaman ikut diperbarui, termasuk cache pengaturan. */
+const refreshSite = () => {
+  updateTag(SITE_SETTINGS_TAG);
+  revalidatePath("/", "layout");
+};
 
 export async function saveSiteSettingsAction(_: AdminState, form: FormData): Promise<AdminState> {
   await requireAdmin();

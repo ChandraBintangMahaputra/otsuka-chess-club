@@ -30,7 +30,7 @@ function SectionHeader({ eyebrow, title, href }: { eyebrow: string; title: strin
   return (
     <div className="flex items-end justify-between gap-4">
       <SectionTitle eyebrow={eyebrow} title={title} />
-      <Link href={href} className="mb-6 flex shrink-0 items-center gap-1 font-semibold text-forest hover:underline">
+      <Link href={href} className="mb-4 flex min-h-11 shrink-0 items-center gap-1 font-semibold text-forest hover:underline">
         Lihat semua <ArrowRight size={16} aria-hidden />
       </Link>
     </div>

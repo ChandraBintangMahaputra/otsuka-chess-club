@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Search, Swords, Trophy, Wifi, WifiOff, X } from "lucide-react";
@@ -50,10 +50,18 @@ export function Lobby({ initial }: { initial: LobbyView }) {
   const rt = useRealtime();
   const me = lobby.me;
   const [clientNow, setNow] = useNow(lobby.incoming.length + lobby.outgoing.length > 0);
+  const seen = useRef(new Set(initial.incoming.map((c) => c.id)));
 
   async function refresh() {
     try {
       const next = await getLobbyAction();
+      // Notifikasi untuk tantangan baru, karena di HP kotaknya bisa berada di luar layar.
+      const fresh = next.incoming.filter((c) => !seen.current.has(c.id));
+      fresh.forEach((c) => seen.current.add(c.id));
+      if (fresh.length) {
+        toastSuccess(`Tantangan dari ${fresh[0].user.fullName}`);
+        if (window.innerWidth < 1024) window.scrollTo({ top: 0, behavior: "smooth" });
+      }
       setLobby(next);
       setOffset(next.serverNow - Date.now());
       // Jam hitung mundur berhenti saat tidak ada tantangan, jadi disegarkan di sini.
@@ -158,10 +166,12 @@ export function Lobby({ initial }: { initial: LobbyView }) {
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="space-y-6">
+    // HP: satu kolom dengan urutan sesuai kepentingan (permainan aktif, tantangan masuk,
+    // pemain online). Desktop: dua kolom. Wrapper memakai `contents` agar urutan bisa diatur.
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+      <div className="contents lg:block lg:space-y-6">
         {busy && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest p-4 text-on-forest">
+          <div className="order-1 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-forest p-4 text-on-forest lg:order-none">
             <p className="font-semibold">Kamu sedang dalam permainan.</p>
             <Link href={`/main/${lobby.activeGameId}`} className={buttonClass("onDark", "sm")}>
               Lanjutkan permainan
@@ -169,7 +179,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
           </div>
         )}
 
-        <Card className="p-4">
+        <Card className="order-3 p-4 lg:order-none">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-xl">Pemain online</h2>
@@ -220,7 +230,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cari anggota lain lewat nama atau username"
+                placeholder="Nama atau username"
                 className="pl-9"
               />
             </div>
@@ -237,8 +247,8 @@ export function Lobby({ initial }: { initial: LobbyView }) {
         </Card>
       </div>
 
-      <aside className="space-y-4">
-        <Card className="p-4">
+      <aside className="contents lg:block lg:space-y-4">
+        <Card className="order-4 p-4 lg:order-none">
           <p className="text-sm text-muted">Rating bermainmu</p>
           <p className="font-display text-4xl font-semibold">{me.rating}</p>
           <Link href="/peringkat" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-forest underline">
@@ -246,7 +256,13 @@ export function Lobby({ initial }: { initial: LobbyView }) {
           </Link>
         </Card>
 
-        <section aria-live="polite" className={cn("rounded-xl border p-4", lobby.incoming.length ? "border-copper bg-copper/5" : "border-line bg-surface")}>
+        <section
+          aria-live="polite"
+          className={cn(
+            "rounded-xl border p-4 lg:order-none",
+            lobby.incoming.length ? "order-2 border-copper bg-copper/5" : "order-5 border-line bg-surface",
+          )}
+        >
           <h2 className="text-lg">Tantangan masuk</h2>
           {lobby.incoming.length === 0 && <p className="mt-1 text-sm text-muted">Belum ada.</p>}
           <ul className="mt-2 space-y-2">
@@ -270,7 +286,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
         </section>
 
         {lobby.outgoing.length > 0 && (
-          <Card className="p-4">
+          <Card className="order-2 p-4 lg:order-none">
             <h2 className="text-lg">Tantangan terkirim</h2>
             <ul className="mt-2 space-y-2">
               {lobby.outgoing.map((c) => (
@@ -287,7 +303,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
           </Card>
         )}
 
-        <Card className="p-4">
+        <Card className="order-6 p-4 lg:order-none">
           <h2 className="text-lg">Permainan terakhir</h2>
           {lobby.recent.length === 0 && <p className="mt-1 text-sm text-muted">Belum ada.</p>}
           <ul className="mt-2 divide-y divide-line">
