@@ -14,7 +14,7 @@ import {
 } from "@/actions/play";
 import { Badge, Button, buttonClass, Card, Field, Input, Select, cn } from "@/components/ui";
 import { TIME_CONTROLS } from "@/lib/online-game";
-import { notify, realtimeConfigured, topics, useChannel, usePolling, useTabActive } from "@/lib/realtime";
+import { topics, useChannel, usePolling, useRealtime, useTabActive } from "@/lib/realtime";
 import { alertError, toastSuccess } from "@/lib/swal";
 
 type OnlinePlayer = {
@@ -47,6 +47,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
   const [results, setResults] = useState<OnlinePlayer[] | null>(null);
   const [pending, start] = useTransition();
   const active = useTabActive();
+  const rt = useRealtime();
   const me = lobby.me;
   const [clientNow, setNow] = useNow(lobby.incoming.length + lobby.outgoing.length > 0);
 
@@ -93,7 +94,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
     start(async () => {
       const r = await createChallengeAction(target.id, tc);
       if (!r.ok) return void alertError(r.error);
-      await notify(topics.user(target.id), "challenge");
+      await rt.notify(topics.user(target.id), "challenge");
       toastSuccess(`Tantangan dikirim ke ${target.fullName}`);
       await refresh();
     });
@@ -106,7 +107,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
         await alertError(r.error);
         return refresh();
       }
-      await notify(topics.user(r.fromId), "challenge-update");
+      await rt.notify(topics.user(r.fromId), "challenge-update");
       if (r.gameId) router.push(`/main/${r.gameId}`);
       else refresh();
     });
@@ -115,7 +116,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
   function cancel(id: string, toId: string) {
     start(async () => {
       await cancelChallengeAction(id);
-      await notify(topics.user(toId), "challenge-update");
+      await rt.notify(topics.user(toId), "challenge-update");
       refresh();
     });
   }
@@ -180,7 +181,7 @@ export function Lobby({ initial }: { initial: LobbyView }) {
                 ) : (
                   <>
                     <WifiOff size={16} aria-hidden />
-                    {realtimeConfigured
+                    {rt.configured
                       ? lobbyStatus === "error"
                         ? "Realtime tidak tersambung. Tantangan tetap berjalan lewat pengecekan berkala."
                         : "Menyambungkan…"

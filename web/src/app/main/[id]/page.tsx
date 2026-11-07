@@ -4,6 +4,8 @@ import { getGameAction } from "@/actions/play";
 import { OnlineGame } from "@/components/play/online-game";
 import { Container } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { RealtimeProvider } from "@/lib/realtime";
+import { realtimeConfig } from "@/lib/realtime-config";
 
 export const metadata: Metadata = { title: "Permainan" };
 
@@ -21,7 +23,9 @@ export default async function GamePage({ params }: PageProps<"/main/[id]">) {
       <h1 className="sr-only">
         {r.game.white.fullName} melawan {r.game.black.fullName}
       </h1>
-      <OnlineGame initial={r.game} />
+      <RealtimeProvider config={realtimeConfig()}>
+        <OnlineGame initial={r.game} />
+      </RealtimeProvider>
     </Container>
   );
 }

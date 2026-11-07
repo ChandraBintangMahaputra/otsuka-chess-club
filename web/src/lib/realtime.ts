@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { RealtimeClient } from "@supabase/realtime-js";
 
 /**
@@ -12,10 +12,18 @@ import { RealtimeClient } from "@supabase/realtime-js";
  * - Isi pesan hanya sinyal "ada perubahan". Data diambil dari server.
  */
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+/**
+ * URL dan key dibaca server saat halaman dibuka (SUPABASE_URL, SUPABASE_ANON_KEY),
+ * lalu diteruskan lewat provider ini. Tidak memakai awalan NEXT_PUBLIC_, sehingga
+ * nilainya tidak tertanam saat build dan bisa diubah di Vercel tanpa build ulang kode.
+ */
+export type RealtimeConfig = { url: string; key: string } | null;
 
-export const realtimeConfigured = Boolean(URL && KEY);
+const RealtimeContext = createContext<RealtimeConfig>(null);
+
+export function RealtimeProvider({ config, children }: { config: RealtimeConfig; children: ReactNode }) {
+  return createElement(RealtimeContext.Provider, { value: config }, children);
+}
 
 export const topics = {
   lobby: "otsuka:lobby",
@@ -24,14 +32,43 @@ export const topics = {
 };
 
 let client: RealtimeClient | null = null;
+let clientUrl = "";
 
-function getClient() {
-  if (!URL || !KEY) return null;
-  client ??= new RealtimeClient(`${URL.replace(/^http/, "ws")}/realtime/v1`, {
-    params: { apikey: KEY },
-    heartbeatIntervalMs: 30_000,
-  });
+function getClient(config: RealtimeConfig) {
+  if (!config) return null;
+  if (!client || clientUrl !== config.url) {
+    client = new RealtimeClient(`${config.url.replace(/^http/, "ws")}/realtime/v1`, {
+      params: { apikey: config.key },
+      heartbeatIntervalMs: 30_000,
+    });
+    clientUrl = config.url;
+  }
   return client;
+}
+
+/** Mengirim sinyal ke channel lain lewat REST, tanpa ikut bergabung ke channel itu. */
+async function send(config: RealtimeConfig, topic: string, event: string, payload: Record<string, unknown>) {
+  if (!config) return;
+  try {
+    await fetch(`${config.url}/realtime/v1/api/broadcast`, {
+      method: "POST",
+      headers: { apikey: config.key, "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ topic, event, payload }] }),
+    });
+  } catch {
+    // Sinyal gagal tidak fatal: halaman lain tetap memuat ulang lewat polling cadangan.
+  }
+}
+
+export function useRealtime() {
+  const config = useContext(RealtimeContext);
+  return useMemo(
+    () => ({
+      configured: Boolean(config),
+      notify: (topic: string, event: string, payload: Record<string, unknown> = {}) => send(config, topic, event, payload),
+    }),
+    [config],
+  );
 }
 
 export type ChannelStatus = "off" | "connecting" | "live" | "error";
@@ -57,8 +94,10 @@ export function useChannel(topic: string | null, opts: ChannelOptions): ChannelS
   const presenceKey = opts.presence?.key ?? "";
   const presenceData = JSON.stringify(opts.presence?.data ?? null);
 
+  const config = useContext(RealtimeContext);
+
   useEffect(() => {
-    const c = getClient();
+    const c = getClient(config);
     if (!c || !topic || !opts.enabled) return;
 
     const ch = c.channel(topic, {
@@ -86,24 +125,10 @@ export function useChannel(topic: string | null, opts: ChannelOptions): ChannelS
       c.removeChannel(ch);
       if (c.getChannels().length === 0) c.disconnect();
     };
-  }, [topic, opts.enabled, events, presenceKey, presenceData, key]);
+  }, [config, topic, opts.enabled, events, presenceKey, presenceData, key]);
 
-  if (!realtimeConfigured || !topic || !opts.enabled) return "off";
+  if (!config || !topic || !opts.enabled) return "off";
   return state?.key === key ? state.status : "connecting";
-}
-
-/** Mengirim sinyal ke channel lain lewat REST, tanpa ikut bergabung ke channel itu. */
-export async function notify(topic: string, event: string, payload: Record<string, unknown> = {}) {
-  if (!URL || !KEY) return;
-  try {
-    await fetch(`${URL}/realtime/v1/api/broadcast`, {
-      method: "POST",
-      headers: { apikey: KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ topic, event, payload }] }),
-    });
-  } catch {
-    // Sinyal gagal tidak fatal: halaman lain tetap memuat ulang lewat polling cadangan.
-  }
 }
 
 /** False bila tab disembunyikan lebih lama dari `graceMs`, agar koneksi dilepas. */

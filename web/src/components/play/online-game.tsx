@@ -19,7 +19,7 @@ import { ChessBoard, type BoardMove } from "@/components/chess/chess-board";
 import { Button, buttonClass, cn } from "@/components/ui";
 import { TERMINATION_LABEL, TIME_CONTROLS, opposite, resultFor, timeControlLabel, turnOf, type Color } from "@/lib/online-game";
 import type { GameView, PlayerView } from "@/lib/play-types";
-import { notify, topics, useChannel, usePolling, useTabActive } from "@/lib/realtime";
+import { topics, useChannel, usePolling, useRealtime, useTabActive } from "@/lib/realtime";
 import { alertError, confirmAction, toastSuccess } from "@/lib/swal";
 
 type Snapshot = { view: GameView; receivedAt: number };
@@ -86,6 +86,7 @@ export function OnlineGame({ initial }: { initial: GameView }) {
   const [pending, start] = useTransition();
   const claimed = useRef(-1);
   const tabActive = useTabActive();
+  const rt = useRealtime();
 
   const view = snap.view;
   const me = view.myColor;
@@ -142,7 +143,7 @@ export function OnlineGame({ initial }: { initial: GameView }) {
     claimTimeoutAction(view.id).then((r) => {
       if (r.game) {
         apply(r.game);
-        if (r.game.status !== "active") notify(topics.game(view.id), "sync");
+        if (r.game.status !== "active") rt.notify(topics.game(view.id), "sync");
       }
     });
   });
@@ -150,7 +151,7 @@ export function OnlineGame({ initial }: { initial: GameView }) {
   function afterAction(r: { ok: boolean; error?: string; game?: GameView | null }) {
     apply(r.game);
     if (!r.ok && r.error) alertError(r.error);
-    notify(topics.game(view.id), "sync");
+    rt.notify(topics.game(view.id), "sync");
   }
 
   function onMove(move: BoardMove) {
@@ -187,7 +188,7 @@ export function OnlineGame({ initial }: { initial: GameView }) {
     start(async () => {
       const r = await createChallengeAction(opponent.id, tc?.id ?? TIME_CONTROLS[1].id);
       if (!r.ok) return void alertError(r.error);
-      await notify(topics.user(opponent.id), "challenge");
+      await rt.notify(topics.user(opponent.id), "challenge");
       toastSuccess(`Tantangan dikirim ke ${opponent.fullName}`);
       router.push("/main");
     });

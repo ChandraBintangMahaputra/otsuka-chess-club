@@ -45,13 +45,13 @@ Jaringan kantor memblokir port 6543 (transaction pooler). Untuk lokal, isi `DATA
    | `CRON_SECRET` | String acak panjang |
    | `SITE_URL` | URL website, mis. `https://otsuka-chess.vercel.app` |
    | `PUBLIC_SITE` | Isi `true` hanya bila website boleh diindeks mesin pencari |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL Supabase, untuk Main online |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon atau publishable key Supabase, untuk Main online |
+   | `SUPABASE_URL` | Project URL Supabase, mis. `https://<ref>.supabase.co`, untuk Main online |
+   | `SUPABASE_ANON_KEY` | Publishable key (`sb_publishable_...`) atau anon key, untuk Main online |
 
 3. Cron harian sudah diatur di `vercel.json`. Cron mengisi puzzle harian dan menjaga project Supabase tetap aktif.
 4. Fungsi server dijalankan di region Mumbai (`bom1`, di `vercel.json`), dekat database Supabase di India, agar setiap langkah catur online cepat.
 
-Variable `NEXT_PUBLIC_` dibaca saat build, jadi setelah mengisinya lakukan **Redeploy**.
+Setelah menambah atau mengubah variable, lakukan **Redeploy**, karena Vercel hanya memakainya untuk deployment baru.
 
 ## Main online
 
@@ -71,7 +71,7 @@ Anggota bisa melihat siapa yang sedang membuka halaman Main, saling menantang, d
 
 Perkiraan kasar: 50 pemain aktif dengan 20 permainan per hari memakai kurang dari 1 juta pesan per bulan. Pantau di Supabase Dashboard > Usage > Realtime.
 
-**Pengaturan Supabase.** Fitur ini memakai channel publik. Pastikan Realtime > Settings > *Allow public access* aktif. Key `NEXT_PUBLIC_SUPABASE_ANON_KEY` memang terlihat di browser. Data tetap aman karena semua tabel dikunci RLS tanpa policy, sehingga key itu tidak bisa membaca tabel apa pun.
+**Pengaturan Supabase.** Fitur ini memakai channel publik. Pastikan Realtime > Settings > *Allow public access* aktif. `SUPABASE_ANON_KEY` dibaca server lalu dikirim ke browser halaman Main, jadi memang terlihat di browser. Server menolak bila yang diisi ternyata secret key. Data tetap aman karena semua tabel dikunci RLS tanpa policy, sehingga key itu tidak bisa membaca tabel apa pun.
 
 ## MCP artikel
 

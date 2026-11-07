@@ -3,9 +3,8 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV !== "production";
 
 // Main online memakai Supabase Realtime (WebSocket) langsung dari browser.
-const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? ` ${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin} ${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin.replace(/^http/, "ws")}`
-  : "";
+// Domain umum dipakai agar header ini tidak bergantung pada variable saat build.
+const supabase = " https://*.supabase.co wss://*.supabase.co";
 
 const csp = [
   "default-src 'self'",
