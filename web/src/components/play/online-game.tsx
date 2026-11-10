@@ -53,11 +53,11 @@ function PlayerBar({
   isMe: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-lg bg-surface px-2.5 py-1.5 sm:px-3 sm:py-2">
       <span className="flex min-w-0 items-center gap-2">
         <span aria-hidden className="size-3.5 shrink-0 rounded-full border border-ink" style={{ background: color === "w" ? "#fff" : "#17211d" }} />
         <span className="min-w-0">
-          <span className="block truncate font-semibold">
+          <span className="block truncate text-sm font-semibold sm:text-base">
             {player.fullName}
             {isMe && <span className="font-normal text-muted"> (kamu)</span>}
           </span>
@@ -68,7 +68,7 @@ function PlayerBar({
         role="timer"
         aria-label={`Sisa waktu ${player.fullName}`}
         className={cn(
-          "rounded-md px-3 py-1 font-mono text-xl font-semibold tabular-nums",
+          "shrink-0 rounded-md px-2.5 py-0.5 font-mono text-lg font-semibold tabular-nums sm:px-3 sm:py-1 sm:text-xl",
           active ? (ms < 20_000 ? "bg-danger text-white" : "bg-forest text-on-forest") : "bg-line/60 text-ink",
         )}
       >
@@ -221,8 +221,9 @@ export function OnlineGame({ initial }: { initial: GameView }) {
   for (let i = 0; i < view.sanMoves.length; i += 2) pairs.push({ no: i / 2 + 1, w: view.sanMoves[i], b: view.sanMoves[i + 1] });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-      <div className="mx-auto w-full max-w-[560px] space-y-2">
+    <div className="grid gap-3 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      {/* Lebar papan dibatasi tinggi layar agar papan, kedua jam, dan status muat tanpa scroll di HP. */}
+      <div className="mx-auto w-full max-w-[max(17rem,min(560px,calc(100dvh-20rem)))] space-y-1.5 sm:space-y-2 lg:max-w-[max(20rem,min(560px,calc(100dvh-12rem)))]">
         <PlayerBar player={player(top)} color={top} ms={clocks[top]} active={isActive && turn === top} isMe={me === top} />
         <ChessBoard
           fen={optimistic?.fen ?? view.fen}
@@ -235,8 +236,8 @@ export function OnlineGame({ initial }: { initial: GameView }) {
         <PlayerBar player={player(bottom)} color={bottom} ms={clocks[bottom]} active={isActive && turn === bottom} isMe={me === bottom} />
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="mx-auto w-full max-w-[560px] space-y-3 sm:space-y-4 lg:max-w-none">
+        <div className="rounded-xl border border-line bg-surface p-3 sm:p-4">
           <p className="text-sm text-muted">
             {timeControlLabel(view.initialMs, view.incrementMs)} · {status === "live" ? "realtime" : "pengecekan berkala"}
           </p>
@@ -300,7 +301,7 @@ export function OnlineGame({ initial }: { initial: GameView }) {
           )}
         </div>
 
-        <ol className="grid max-h-72 grid-cols-[2.5rem_1fr_1fr] gap-x-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 text-[15px]">
+        <ol className="grid max-h-48 grid-cols-[2.5rem_1fr_1fr] sm:max-h-72 gap-x-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 text-[15px]">
           {pairs.length === 0 && <li className="col-span-3 p-2 text-sm text-muted">Belum ada langkah.</li>}
           {pairs.map((p) => (
             <li key={p.no} className="col-span-3 grid grid-cols-subgrid items-center py-0.5">

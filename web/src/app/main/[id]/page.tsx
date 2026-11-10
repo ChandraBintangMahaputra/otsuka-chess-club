@@ -19,7 +19,7 @@ export default async function GamePage({ params }: PageProps<"/main/[id]">) {
   if (!r.ok) notFound();
 
   return (
-    <Container className="py-6 pb-12">
+    <Container className="px-2 pb-8 pt-2 sm:px-6 sm:py-6">
       <h1 className="sr-only">
         {r.game.white.fullName} melawan {r.game.black.fullName}
       </h1>

@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronDown,
   Crown,
+  Medal,
   Ellipsis,
   Trophy,
   FileText,
@@ -30,6 +31,7 @@ const L = {
   puzzle: { href: "/puzzle", label: "Puzzle", icon: Puzzle },
   main: { href: "/main", label: "Main", icon: Crown },
   peringkat: { href: "/peringkat", label: "Peringkat", icon: Trophy },
+  turnamen: { href: "/turnamen", label: "Turnamen", icon: Medal },
   kegiatan: { href: "/kegiatan", label: "Kegiatan", icon: CalendarDays },
   artikel: { href: "/artikel", label: "Artikel", icon: FileText },
   dokumentasi: { href: "/dokumentasi", label: "Dokumentasi", icon: Images },
@@ -37,9 +39,9 @@ const L = {
 
 // HP: 4 tombol utama + Lainnya. Desktop: Beranda lewat logo.
 const PRIMARY = [L.beranda, L.belajar, L.puzzle, L.main];
-const MORE = [L.opening, L.peringkat, L.kegiatan, L.artikel, L.dokumentasi];
+const MORE = [L.turnamen, L.opening, L.peringkat, L.kegiatan, L.artikel, L.dokumentasi];
 const DESKTOP = [L.belajar, L.opening, L.puzzle, L.main, L.peringkat];
-const DESKTOP_MORE = [L.kegiatan, L.artikel, L.dokumentasi];
+const DESKTOP_MORE = [L.turnamen, L.kegiatan, L.artikel, L.dokumentasi];
 
 const isActive = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);

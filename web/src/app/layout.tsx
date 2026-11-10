@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <MeProvider>
           <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
             <Container className="flex h-16 items-center justify-between gap-4">
-              <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
+              <Link href="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-display text-base font-semibold sm:text-lg">
                 <span className="grid size-9 place-items-center rounded-lg bg-forest p-1">
                   <Image src="/pieces/wN.svg" alt="" width={28} height={28} unoptimized />
                 </span>

@@ -8,6 +8,7 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 const LINKS = [
   ["/admin", "Dasbor"],
   ["/admin/beranda", "Beranda"],
+  ["/admin/turnamen", "Turnamen"],
   ["/admin/kegiatan", "Kegiatan"],
   ["/admin/artikel", "Artikel"],
   ["/admin/dokumentasi", "Dokumentasi"],

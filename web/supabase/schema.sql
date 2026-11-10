@@ -222,3 +222,17 @@ alter table public.lesson_progress  enable row level security;
 alter table public.opening_progress enable row level security;
 alter table public.puzzle_attempts  enable row level security;
 alter table public.activities       enable row level security;
+
+-- Turnamen: bagan gugur dan semua bertemu semua, dikelola di /admin/turnamen.
+create table if not exists public.tournaments (
+  id            uuid primary key default gen_random_uuid(),
+  slug          text not null unique,
+  title         text not null,
+  subtitle      text not null default '',
+  data          jsonb not null,
+  is_published  boolean not null default false,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.tournaments enable row level security;
