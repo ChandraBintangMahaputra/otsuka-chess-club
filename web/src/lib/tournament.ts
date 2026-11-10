@@ -307,13 +307,21 @@ const POSTER_PUTRA = [
   "Budi Gunawan",
 ];
 
-const POSTER_PUTRI_SESSIONS: [string, string, string, string, string][] = [
-  ["Pemy", "Tiara", "Nabila", "Baiti", "Diva"],
-  ["Diva", "Tiara", "Pemy", "Nabila", "Baiti"],
-  ["Diva", "Baiti", "Tiara", "Nabila", "Pemy"],
-  ["Diva", "Nabila", "Baiti", "Pemy", "Tiara"],
-  ["Diva", "Pemy", "Baiti", "Tiara", "Nabila"],
-];
+/** Urutan sesuai Sesi 1 di poster: Pemy vs Tiara, Nabila vs Baiti, Diva mendapat BYE. */
+const POSTER_PUTRI = ["Pemy", "Tiara", "Nabila", "Baiti", "Diva"];
+
+export function posterPutri(): KnockoutSection {
+  return {
+    kind: "knockout",
+    title: "Putri · Sistem gugur",
+    note: "Satu hari penuh. BYE berarti lolos otomatis.",
+    ...generateKnockout(POSTER_PUTRI, [
+      { name: "Babak 1", detail: "Sabtu · 2 laga · 1 BYE" },
+      { name: "Semifinal", detail: "Sabtu · 1 laga · 1 BYE" },
+      { name: "Final", detail: "Sabtu · 1 laga" },
+    ]),
+  };
+}
 
 export function posterTournament(): Omit<Tournament, "id"> {
   const ko = generateKnockout(POSTER_PUTRA, [
@@ -329,7 +337,7 @@ export function posterTournament(): Omit<Tournament, "id"> {
     subtitle: "Sistem gugur · pertemuan diacak · Senin sampai Jumat",
     isPublished: true,
     data: {
-      footnote: "Pemenang M# berarti pemenang dari pertandingan bernomor tersebut. Bagan putra memakai undian acak.",
+      footnote: "Pemenang M# berarti pemenang dari pertandingan bernomor tersebut. Bagan putra dan putri memakai undian acak.",
       sections: [
         {
           kind: "knockout",
@@ -337,21 +345,7 @@ export function posterTournament(): Omit<Tournament, "id"> {
           note: "Pemenang lanjut ke babak berikutnya. BYE berarti lolos otomatis.",
           ...ko,
         },
-        {
-          kind: "roundrobin",
-          title: "Putri · Semua bertemu semua",
-          note: "Jadwal terpisah, satu hari penuh, lima sesi.",
-          players: ["Pemy", "Tiara", "Nabila", "Baiti", "Diva"],
-          sessions: POSTER_PUTRI_SESSIONS.map(([a, b, c, d, rest], i) => ({
-            name: `Sesi ${i + 1}`,
-            day: "Sabtu",
-            rest,
-            games: [
-              { white: a, black: b, result: null },
-              { white: c, black: d, result: null },
-            ],
-          })),
-        },
+        posterPutri(),
       ],
     },
   };

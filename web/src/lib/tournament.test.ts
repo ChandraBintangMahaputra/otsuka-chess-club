@@ -14,7 +14,7 @@ import {
 
 const poster = posterTournament();
 const ko = poster.data.sections[0] as KnockoutSection;
-const rr = poster.data.sections[1] as RoundRobinSection;
+const putri = poster.data.sections[1] as KnockoutSection;
 const label = (id: string) => {
   const r = createResolver(ko.matches);
   const m = ko.matches.find((x) => x.id === id)!;
@@ -49,9 +49,18 @@ describe("bagan poster", () => {
     expect(r.slot(m19.a).name).toBe("Poltak Simorangkir");
   });
 
-  it("jadwal putri: tiap pasangan bertemu sekali", () => {
-    const pairs = rr.sessions.flatMap((s) => s.games.map((g) => [g.white, g.black].sort().join("-")));
-    expect(new Set(pairs).size).toBe(10);
+  it("bagan putri sistem gugur", () => {
+    const r = createResolver(putri.matches);
+    const names = (id: string) => {
+      const m = putri.matches.find((x) => x.id === id)!;
+      return [r.slot(m.a), r.slot(m.b)].map((x) => x.name ?? x.placeholder);
+    };
+    expect(putri.kind).toBe("knockout");
+    expect(putri.rounds.map((x) => x.name)).toEqual(["Babak 1", "Semifinal", "Final"]);
+    expect(names("M1")).toEqual(["Pemy", "Tiara"]);
+    expect(names("M2")).toEqual(["Nabila", "Baiti"]);
+    expect(names("M3")).toEqual(["Diva", "Pemenang M1"]);
+    expect(names("M4")).toEqual(["Pemenang M2", "Pemenang M3"]);
   });
 });
 
