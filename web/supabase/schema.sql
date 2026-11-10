@@ -236,3 +236,20 @@ create table if not exists public.tournaments (
 );
 
 alter table public.tournaments enable row level security;
+
+-- Log undian turnamen. Hanya ditambah, tidak pernah diubah, agar semua undian ulang terlihat publik.
+create table if not exists public.tournament_draws (
+  id             uuid primary key default gen_random_uuid(),
+  tournament_id  uuid not null references public.tournaments (id) on delete cascade,
+  section_index  int not null,
+  section_title  text not null,
+  algorithm      text not null,
+  seed           text not null,
+  players        text[] not null,
+  result         text[] not null,
+  created_by     uuid references public.users (id) on delete set null,
+  created_at     timestamptz not null default now()
+);
+create index if not exists tournament_draws_idx on public.tournament_draws (tournament_id, created_at);
+
+alter table public.tournament_draws enable row level security;

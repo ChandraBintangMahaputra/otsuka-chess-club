@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, Crown, Trophy } from "lucide-react";
 import { cn } from "@/components/ui";
+import { DrawPanel } from "@/components/tournament/draw-panel";
+import type { DrawRecord } from "@/lib/draw";
 import {
   championOf,
   createResolver,
@@ -34,7 +36,7 @@ function Checker({ className }: { className?: string }) {
   );
 }
 
-export function TournamentView({ t }: { t: Pick<Tournament, "title" | "subtitle" | "data"> }) {
+export function TournamentView({ t, draws = [] }: { t: Pick<Tournament, "title" | "subtitle" | "data">; draws?: DrawRecord[] }) {
   const players = t.data.sections.reduce(
     (acc, s) => {
       if (s.kind === "knockout") {
@@ -74,6 +76,11 @@ export function TournamentView({ t }: { t: Pick<Tournament, "title" | "subtitle"
         <section key={i} className={cn("py-8 sm:py-12", i % 2 === 1 && "bg-[#efe7d6]")}>
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
             <SectionView section={s} />
+            {s.kind === "knockout" && draws.some((d) => d.sectionIndex === i) && (
+              <div className="mt-6">
+                <DrawPanel draws={draws.filter((d) => d.sectionIndex === i)} section={s} />
+              </div>
+            )}
           </div>
         </section>
       ))}

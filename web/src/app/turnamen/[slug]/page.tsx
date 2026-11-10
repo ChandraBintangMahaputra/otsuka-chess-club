@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TournamentView } from "@/components/tournament/tournament-view";
-import { getTournamentBySlug } from "@/lib/tournament-queries";
+import { getTournamentBySlug, listDraws } from "@/lib/tournament-queries";
 
 export const revalidate = 60;
 
@@ -13,5 +13,5 @@ export async function generateMetadata({ params }: PageProps<"/turnamen/[slug]">
 export default async function TurnamenDetailPage({ params }: PageProps<"/turnamen/[slug]">) {
   const t = await getTournamentBySlug((await params).slug);
   if (!t) notFound();
-  return <TournamentView t={t} />;
+  return <TournamentView t={t} draws={await listDraws(t.id)} />;
 }

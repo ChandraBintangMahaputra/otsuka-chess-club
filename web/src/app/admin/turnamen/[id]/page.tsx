@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { TournamentEditor } from "@/components/tournament/tournament-editor";
-import { getTournamentById } from "@/lib/tournament-queries";
+import { getTournamentById, listDraws } from "@/lib/tournament-queries";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -9,5 +9,5 @@ export default async function EditTurnamenPage({ params }: PageProps<"/admin/tur
   if (!UUID.test(id)) notFound();
   const t = await getTournamentById(id);
   if (!t) notFound();
-  return <TournamentEditor initial={t} />;
+  return <TournamentEditor initial={t} draws={await listDraws(t.id)} />;
 }

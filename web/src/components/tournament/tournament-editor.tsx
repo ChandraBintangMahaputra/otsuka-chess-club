@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ExternalLink, Pencil, Plus, Shuffle, Trash2, Trophy, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ExternalLink, Dices, Pencil, Plus, Trash2, Trophy, Wand2 } from "lucide-react";
 import {
   createTournamentAction,
   deleteTournamentAction,
+  drawSectionAction,
   saveTournamentAction,
 } from "@/actions/admin-tournament";
 import { ConfirmDeleteButton } from "@/components/admin/forms";
 import { Button, buttonClass, cn, Field, Input, Select } from "@/components/ui";
+import { DrawPanel } from "@/components/tournament/draw-panel";
 import { SectionView } from "@/components/tournament/tournament-view";
+import { drawProblem, type DrawRecord } from "@/lib/draw";
 import { alertError, confirmAction, toastSuccess } from "@/lib/swal";
 import {
   createResolver,
@@ -56,15 +59,6 @@ export function CreateTournamentButtons() {
   );
 }
 
-function shuffle<T>(list: T[]) {
-  const a = [...list];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 /** "1", "1½", "1.5", "2,5" menjadi angka; selain itu null. */
 function scoreValue(s: string) {
   const t = s.trim().replace(",", ".").replace("½", ".5");
@@ -73,7 +67,7 @@ function scoreValue(s: string) {
   return Number.isFinite(n) ? n : null;
 }
 
-export function TournamentEditor({ initial }: { initial: Tournament }) {
+export function TournamentEditor({ initial, draws }: { initial: Tournament; draws: DrawRecord[] }) {
   const router = useRouter();
   const [meta, setMeta] = useState({
     title: initial.title,
@@ -187,6 +181,20 @@ export function TournamentEditor({ initial }: { initial: Tournament }) {
                 <Input id="sec-note" value={section.note} onChange={(e) => edit((d) => void (d.sections[tab].note = e.target.value))} />
               </Field>
             </div>
+            {section.kind === "knockout" && (
+              <DrawBox
+                tournamentId={initial.id}
+                index={tab}
+                section={section}
+                dirty={dirty}
+                draws={draws.filter((d) => d.sectionIndex === tab)}
+                onDrawn={(next) => {
+                  setData(next);
+                  setDirty(false);
+                  router.refresh();
+                }}
+              />
+            )}
             {section.kind === "knockout" ? (
               <KnockoutEditor
                 section={section}
@@ -425,13 +433,12 @@ function Generator({
   replace: (s: KnockoutSection) => void;
 }) {
   const [text, setText] = useState(players.join("\n"));
-  const [random, setRandom] = useState(false);
   const names = text.split("\n").map((s) => s.trim()).filter(Boolean);
 
   async function run() {
     if (names.length < 2) return void alertError("Isi minimal dua peserta.");
     if (!(await confirmAction("Buat ulang bagan?", "Semua laga, skor, dan pemenang di bagian ini diganti.", "Ya, buat ulang"))) return;
-    const order = random ? shuffle(names) : names;
+    const order = names;
     // Nama babak lama dipakai lagi bila jumlah babaknya tetap sama.
     const probe = generateKnockout(order);
     const g = probe.rounds.length === section.rounds.length ? generateKnockout(order, section.rounds) : probe;
@@ -453,10 +460,7 @@ function Generator({
           className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-base focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/25"
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
-            <input type="checkbox" checked={random} onChange={(e) => setRandom(e.target.checked)} className="size-5 accent-[var(--forest)]" />
-            <Shuffle size={16} aria-hidden /> Acak urutan (undian)
-          </label>
+          <p className="text-sm text-muted">Untuk pertemuan acak, pakai tombol undian sistem setelah bagan dibuat.</p>
           <Button size="sm" onClick={run}>
             Buat bagan · {names.length} peserta
           </Button>
@@ -770,5 +774,64 @@ function RoundRobinEditor({
         <Plus size={16} aria-hidden /> Tambah sesi
       </Button>
     </div>
+  );
+}
+
+/* Undian oleh sistem */
+
+function DrawBox({
+  tournamentId,
+  index,
+  section,
+  dirty,
+  draws,
+  onDrawn,
+}: {
+  tournamentId: string;
+  index: number;
+  section: KnockoutSection;
+  dirty: boolean;
+  draws: DrawRecord[];
+  onDrawn: (data: TournamentData) => void;
+}) {
+  const [pending, start] = useTransition();
+  const problem = drawProblem(section);
+  const players = section.matches.flatMap((m) => [m.a, m.b]).filter((s) => s.kind === "player").length;
+
+  async function draw() {
+    const text =
+      `${players} nama diacak ke posisi bagan yang ada. Skor dan pemenang di bagian ini dikosongkan. ` +
+      `Undian tercatat permanen dan tampil di halaman publik${draws.length ? ` sebagai undian ke-${draws.length + 1}` : ""}.`;
+    if (!(await confirmAction("Undi acak sekarang?", text, "Ya, undi"))) return;
+    start(async () => {
+      try {
+        const r = await drawSectionAction(tournamentId, index);
+        if (!r.ok) return void alertError(r.error);
+        onDrawn(r.data);
+        toastSuccess("Undian selesai dan tercatat.");
+      } catch {
+        alertError("Undian gagal. Coba lagi.");
+      }
+    });
+  }
+
+  return (
+    <section className="space-y-3 rounded-xl border border-forest/40 bg-forest/5 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg">Undian oleh sistem</h2>
+          <p className="text-sm text-muted">
+            Struktur bagan tetap, hanya nama pemain yang diacak. Kode acak dibuat server, hasilnya bisa diperiksa ulang publik.
+          </p>
+        </div>
+        <Button className="shrink-0" disabled={pending || dirty || Boolean(problem)} onClick={draw}>
+          <Dices size={18} aria-hidden /> {pending ? "Mengundi…" : "Undi acak"}
+        </Button>
+      </div>
+      {(dirty || problem) && (
+        <p className="text-sm font-semibold text-copper">{dirty ? "Simpan perubahan dulu sebelum mengundi." : problem}</p>
+      )}
+      <DrawPanel draws={draws} section={section} admin />
+    </section>
   );
 }
