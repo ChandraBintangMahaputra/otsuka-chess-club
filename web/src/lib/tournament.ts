@@ -234,35 +234,83 @@ export const formatPoints = (p: number) => (Number.isInteger(p) ? String(p) : `$
  * yang tersisa mendapat BYE dan tampil paling atas di babak berikutnya.
  */
 export function generateKnockout(players: string[], roundNames: KoRound[] = []): Pick<KnockoutSection, "rounds" | "matches"> {
-  const matches: KoMatch[] = [];
-  const rounds: KoRound[] = [];
-  let entrants: Slot[] = players.map((p) => ({ kind: "player", name: p }));
-  let n = 0;
-  let byes = 0;
-  let round = 0;
+  const out = { matches: [] as KoMatch[], rounds: [] as KoRound[], n: 0, byes: 0 };
+  pairUp(players.map((p) => ({ kind: "player", name: p })), 0, roundNames, out);
+  return { rounds: out.rounds, matches: out.matches };
+}
+
+/** Memasangkan peserta babak demi babak sampai tersisa satu juara. */
+function pairUp(
+  start: Slot[],
+  firstRound: number,
+  roundNames: KoRound[],
+  out: { matches: KoMatch[]; rounds: KoRound[]; n: number; byes: number },
+) {
+  let entrants = start;
+  let round = firstRound;
   while (entrants.length > 1) {
     const next: Slot[] = [];
     let bye: Slot | null = null;
     let games = 0;
     for (let i = 0; i + 1 < entrants.length; i += 2) {
-      const id = `M${++n}`;
-      matches.push({ id, round, a: entrants[i], b: entrants[i + 1], scoreA: "", scoreB: "", winner: null });
+      const id = `M${++out.n}`;
+      out.matches.push({ id, round, a: entrants[i], b: entrants[i + 1], scoreA: "", scoreB: "", winner: null });
       next.push({ kind: "winner", match: id });
       games++;
     }
     if (entrants.length % 2) {
-      const id = `BYE${++byes}`;
-      matches.push({ id, round, a: entrants[entrants.length - 1], b: { kind: "bye" }, scoreA: "", scoreB: "", winner: null });
+      const id = `BYE${++out.byes}`;
+      out.matches.push({ id, round, a: entrants[entrants.length - 1], b: { kind: "bye" }, scoreA: "", scoreB: "", winner: null });
       bye = { kind: "winner", match: id };
     }
-    rounds.push({
+    out.rounds.push({
       name: roundNames[round]?.name ?? `Babak ${round + 1}`,
       detail: roundNames[round]?.detail ?? `${games} laga${bye ? " · 1 BYE" : ""}`,
     });
     entrants = bye ? [bye, ...next] : next;
     round++;
   }
-  return { rounds, matches };
+}
+
+/**
+ * Merapikan bagan tanpa menyentuh pertemuan babak pertama.
+ * Laga babak pertama tetap (urutan, pemain, skor), hanya nomornya dirapikan:
+ * laga berisi dua pemain menjadi M, laga dengan BYE menjadi BYE.
+ * Babak berikutnya disusun ulang dari pemenang babak pertama, BYE lebih dulu
+ * (sama seperti generator), sehingga setiap pemenang tersambung tepat sekali.
+ * Hasil babak lanjutan dipertahankan bila pertemuannya tidak berubah.
+ */
+export function tidyKnockout(s: KnockoutSection): KnockoutSection {
+  const out = { matches: [] as KoMatch[], rounds: [s.rounds[0] ?? { name: "Babak 1", detail: "" }], n: 0, byes: 0 };
+  const first = s.matches.filter((m) => m.round === 0);
+  const real = first.filter((m) => !isByeMatch(m));
+  const byes = first.filter(isByeMatch);
+  const rename = new Map<string, string>();
+  for (const m of real) rename.set(m.id, `M${++out.n}`);
+  for (const m of byes) rename.set(m.id, `BYE${++out.byes}`);
+  for (const m of first) out.matches.push({ ...m, id: rename.get(m.id)! });
+  if (first.length === 0) return { ...s, ...generateKnockout([]) };
+
+  const entrants: Slot[] = [...byes, ...real].map((m) => ({ kind: "winner", match: rename.get(m.id)! }));
+  pairUp(entrants, 1, s.rounds, out);
+  if (entrants.length === 1) out.rounds = out.rounds.slice(0, 1);
+
+  // Bawa skor babak lanjutan bila kedua sisinya masih berasal dari laga yang sama.
+  const oldKey = (m: KoMatch) => {
+    const k = (x: Slot) => (x.kind === "winner" ? rename.get(x.match) ?? `?${x.match}` : x.kind === "bye" ? "BYE" : `P:${x.name}`);
+    return `${k(m.a)}|${k(m.b)}`;
+  };
+  // Nomor babak lanjutan yang lama dipetakan berurutan dari babak 2 ke atas.
+  const later = s.matches.filter((m) => m.round > 0).sort((x, y) => x.round - y.round);
+  const fresh = out.matches.filter((m) => m.round > 0);
+  for (const old of later) {
+    const hit = fresh.find((m) => !rename.has(old.id) && `${m.a.kind === "winner" ? m.a.match : ""}|${m.b.kind === "winner" ? m.b.match : m.b.kind === "bye" ? "BYE" : ""}` === oldKey(old));
+    if (hit) {
+      rename.set(old.id, hit.id);
+      Object.assign(hit, { scoreA: old.scoreA, scoreB: old.scoreB, winner: old.winner });
+    }
+  }
+  return { ...s, rounds: out.rounds, matches: out.matches };
 }
 
 /** Jadwal semua bertemu semua (metode lingkaran). Peserta ganjil mendapat istirahat. */

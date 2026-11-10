@@ -7,6 +7,7 @@ import {
   posterTournament,
   renumber,
   standingsOf,
+  tidyKnockout,
   tournamentDataSchema,
   type KnockoutSection,
   type RoundRobinSection,
@@ -112,5 +113,40 @@ describe("generator", () => {
     g.matches[2].a = { kind: "winner", match: "M9" };
     const r = tournamentDataSchema.safeParse({ footnote: "", sections: [{ kind: "knockout", title: "", note: "", ...g }] });
     expect(r.success).toBe(false);
+  });
+});
+
+describe("rapikan bagan", () => {
+  const sambungan = (s: KnockoutSection) => {
+    const used = s.matches.flatMap((m) => [m.a, m.b]).flatMap((x) => (x.kind === "winner" ? [x.match] : []));
+    return { dobel: used.length !== new Set(used).size, lepas: s.matches.filter((m) => !used.includes(m.id)).map((m) => m.id) };
+  };
+
+  it("bagan poster tidak berubah", () => {
+    expect(tidyKnockout(ko)).toEqual(ko);
+  });
+
+  it("memperbaiki BYE berisi dua pemain dan laga yang tidak tersambung, babak 1 tetap", () => {
+    const s = structuredClone(ko);
+    s.matches.find((m) => m.id === "BYE1")!.b = { kind: "player", name: "Zainy" };
+    s.matches.push({ id: "M28", round: 0, a: { kind: "player", name: "Ruli" }, b: { kind: "player", name: "Eka" }, scoreA: "", scoreB: "", winner: null });
+    s.matches[0].winner = "a";
+    const t = tidyKnockout(s);
+    const r0 = t.matches.filter((m) => m.round === 0);
+    expect(r0.map((m) => m.id)).toEqual(Array.from({ length: 14 }, (_, i) => `M${i + 1}`));
+    expect(r0.map((m) => [m.a, m.b, m.winner])).toEqual(s.matches.filter((m) => m.round === 0).map((m) => [m.a, m.b, m.winner]));
+    expect([1, 2, 3, 4].map((r) => t.matches.filter((m) => m.round === r).length)).toEqual([7, 4, 2, 1]);
+    expect(t.matches.filter((m) => m.round === 1).some((m) => m.b.kind === "bye")).toBe(false);
+    expect(sambungan(t)).toEqual({ dobel: false, lepas: ["M27"] });
+    expect(t.rounds.map((x) => x.name)).toEqual(ko.rounds.map((x) => x.name));
+    expect(tournamentDataSchema.safeParse({ footnote: "", sections: [t] }).success).toBe(true);
+  });
+
+  it("skor babak lanjutan yang pertemuannya sama tetap ada", () => {
+    const s = structuredClone(ko);
+    s.matches.find((m) => m.id === "M14")!.winner = "b";
+    s.matches.find((m) => m.id === "M14")!.scoreB = "1";
+    const t = tidyKnockout(s);
+    expect(t.matches.find((m) => m.id === "M14")).toMatchObject({ winner: "b", scoreB: "1" });
   });
 });

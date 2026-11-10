@@ -23,7 +23,7 @@ import {
   generateKnockout,
   generateRoundRobin,
   isByeMatch,
-  renumber,
+  tidyKnockout,
   winnerSide,
   type KnockoutSection,
   type KoMatch,
@@ -409,8 +409,19 @@ function KnockoutEditor({
         <Button size="sm" variant="secondary" onClick={() => edit((s) => void s.rounds.push({ name: `Babak ${s.rounds.length + 1}`, detail: "" }))}>
           <Plus size={16} aria-hidden /> Tambah babak
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => replace(renumber(section))}>
-          Nomori ulang laga (M1, M2, …)
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={async () => {
+            const ok = await confirmAction(
+              "Rapikan bagan?",
+              "Pertemuan babak pertama tidak diubah, hanya nomornya dirapikan (M1, M2, …). Babak berikutnya disusun ulang dari pemenang babak pertama. Skor babak lanjutan yang pertemuannya tetap sama tidak hilang.",
+              "Ya, rapikan",
+            );
+            if (ok) replace(tidyKnockout(section));
+          }}
+        >
+          Rapikan nomor laga &amp; babak lanjutan
         </Button>
       </div>
 
